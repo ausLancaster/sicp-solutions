@@ -1,0 +1,25 @@
+(define (sum term a next b)
+	(if (> a b)
+		0
+		(+ (term a)
+			(sum term (next a) next b))))
+
+(define (simpson f a b n)
+	(define (inc x)
+		(+ x 1))
+	(define h (/ (- b a) n))
+	(define (pref p)
+		(cond ((or (= p 0) (= p n)) 1)
+			  ((even? p) 2)
+			  (else 4)))
+	(define (term x)
+		(* (pref x) (f (+ (* x h) a))))
+	(* (/ h 3)
+	   (sum term 0 inc n)))
+
+(define (integral f a b dx)
+	(define (add-dx x) (+ x dx))
+	(* (sum f (+ a (/ dx 2.0)) add-dx b)
+		dx))
+
+(define (cube x) (* x x x))
