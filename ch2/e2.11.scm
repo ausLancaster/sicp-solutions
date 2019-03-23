@@ -1,0 +1,112 @@
+(define (make-interval a b) (cons a b))
+
+(define (lower-bound interval)
+	(car interval))
+
+(define (upper-bound interval)
+	(cdr interval))
+
+(define (mul-interval x y)
+	(if (< (lower-bound x) 0)
+		(if (< (upper-bound x) 0)
+			(if (< (lower-bound y) 0)
+				(if (< (upper-bound y) 0)
+					(mul-nnnn x y)
+					(mul-nnnp x y))
+				(mul-nnpp x y))
+			(if (< (lower-bound y) 0)
+				(if (< (upper-bound y) 0)
+					(mul-nnnp y x)
+					(mul-npnp x y))
+				(mul-nppp x y)))
+		(if (< (lower-bound y) 0)
+			(if (< (upper-bound y) 0)
+				(mul-nnpp y x)
+				(mul-nppp y x))
+			(mul-pppp x y))))
+
+(define (mul-npnp x y)
+   (let ((p1 (* (lower-bound x) (lower-bound y)))
+         (p2 (* (lower-bound x) (upper-bound y)))
+         (p3 (* (upper-bound x) (lower-bound y)))
+         (p4 (* (upper-bound x) (upper-bound y))))
+     (make-interval (min p2 p3)
+                    (max p1 p4))))
+
+(define (mul-pppp x y)
+	(make-interval (* (lower-bound x) (lower-bound y))
+				   (* (upper-bound x) (upper-bound y))))
+
+(define (mul-nnnn x y)
+	(make-interval (* (upper-bound x) (upper-bound y))
+				   (* (lower-bound x) (lower-bound y))))
+
+
+(define (mul-nnpp x y)
+	(make-interval (* (lower-bound x) (upper-bound y))
+				   (* (upper-bound x) (lower-bound y))))
+
+(define (mul-nnnp x y)
+	(make-interval (* (lower-bound x) (upper-bound y))
+				   (* (lower-bound x) (lower-bound y))))
+
+(define (mul-nppp x y)
+	(make-interval (* (lower-bound x) (upper-bound y))
+				   (* (upper-bound x) (upper-bound y))))
+
+(define (div-interval x y)
+	(if (= (- (upper-bound y) (lower-bound y)) 0)
+		(error "Cannot divide by interval of length 0")
+		(mul-interval x
+					  (make-interval (/ 1.0 (upper-bound y))
+					  				 (/ 1.0 (lower-bound y))))))
+
+; for testing
+
+(define (mul x1 x2 y1 y2)
+	(mul-interval (make-interval x1 x2) (make-interval y1 y2)))
+
+(define (mul-old x1 x2 y1 y2)
+	(mul-interval-old (make-interval x1 x2) (make-interval y1 y2)))
+
+(define (mul-interval-old x y)
+   (let ((p1 (* (lower-bound x) (lower-bound y)))
+         (p2 (* (lower-bound x) (upper-bound y)))
+         (p3 (* (upper-bound x) (lower-bound y)))
+         (p4 (* (upper-bound x) (upper-bound y))))
+     (make-interval (min p1 p2 p3 p4)
+                    (max p1 p2 p3 p4))))
+
+(define (test-mul times)
+	(define (test)
+		(let ((x1 (- (random 20) 10))
+			  (x2 (- (random 20) 10))
+			  (y1 (- (random 20) 10))
+			  (y2 (- (random 20) 10)))
+			(let ((result (mul (min x1 x2) (max x1 x2) (min y1 y2) (max y1 y2)))
+			  	  (answer (mul-old (min x1 x2) (max x1 x2) (min y1 y2) (max y1 y2))))
+			(if (and (= (lower-bound result) (lower-bound answer))
+					 (= (upper-bound result) (upper-bound answer)))
+				(begin (print-4 x1 x2 y1 y2)
+					   (display "Y"))
+				(begin (print-4 x1 x2 y1 y2)
+					   (display "N"))))))
+	(define (print-4 x1 x2 y1 y2)
+		(begin (newline)
+				(display "(")
+				(display x1)
+				(display ",")
+				(display x2)
+				(display ") (")
+				(display y1)
+				(display ",")
+				(display y2)
+				(display ") ")))
+	(repeat test times))
+
+
+(define (repeat f times)
+	(if (= times 0)
+		0
+		(begin (f)
+			   (repeat f (- times 1)))))
